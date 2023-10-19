@@ -63,12 +63,33 @@ defmodule ExAws.Config do
   """
   @spec new(atom, keyword) :: map()
   def new(service, opts \\ []) do
-    overrides = Map.new(opts)
+    overrides = Map.new(opts) |> IO.inspect(label: "--- ExAws.Config.new.opts")
+
+    u = ExAws.Config.Defaults.host(service, "us-east-1-fips")
+    IO.inspect({service, u}, label: "--- host")
 
     service
     |> build_base(overrides)
     |> retrieve_runtime_config()
-    |> parse_host_for_region()
+    |> parse_host_for_region() |> IO.inspect(label: "--- config")
+  end
+
+  def set_fips_host(config, service, opts) do
+    #      if opts[:fips] do
+    IO.inspect({service, opts}, label: "--- set_fips_host input")
+    x = opts[:fips] || true
+
+    c =
+      if x do
+        Map.update!(config, :host, fn _ ->
+          ExAws.Config.Defaults.host(service, "us-east-1-fips")
+        end)
+      else
+        IO.inspect(config, "--- Unexpected code path.")
+      end
+
+    IO.inspect({opts[:fips], service, c}, label: "--- set_fips_host output")
+    c
   end
 
   @doc """

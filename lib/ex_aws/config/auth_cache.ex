@@ -47,6 +47,7 @@ defmodule ExAws.Config.AuthCache do
   end
 
   def handle_call({:refresh_awscli_config, profile, expiration}, _from, ets) do
+    IO.inspect({profile, expiration, ets}, label: "____________ auth_cache.handle_call:50")
     auth = refresh_awscli_config(profile, expiration, ets)
     {:reply, auth, ets}
   end
