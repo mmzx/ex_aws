@@ -71,26 +71,27 @@ defmodule ExAws.Config do
     service
     |> build_base(overrides)
     |> retrieve_runtime_config()
-    |> parse_host_for_region() |> IO.inspect(label: "--- config")
+    |> parse_host_for_region()
+    |> IO.inspect(label: "--- config")
   end
 
-  def set_fips_host(config, service, opts) do
-    #      if opts[:fips] do
-    IO.inspect({service, opts}, label: "--- set_fips_host input")
-    x = opts[:fips] || true
+  # def set_fips_host(config, service, opts) do
+  #   #      if opts[:fips] do
+  #   IO.inspect({service, opts}, label: "--- set_fips_host input")
+  #   x = opts[:fips] || true
 
-    c =
-      if x do
-        Map.update!(config, :host, fn _ ->
-          ExAws.Config.Defaults.host(service, "us-east-1-fips")
-        end)
-      else
-        IO.inspect(config, "--- Unexpected code path.")
-      end
+  #   c =
+  #     if x do
+  #       Map.update!(config, :host, fn _ ->
+  #         ExAws.Config.Defaults.host(service, "us-east-1-fips")
+  #       end)
+  #     else
+  #       IO.inspect(config, "--- Unexpected code path.")
+  #     end
 
-    IO.inspect({opts[:fips], service, c}, label: "--- set_fips_host output")
-    c
-  end
+  #   IO.inspect({opts[:fips], service, c}, label: "--- set_fips_host output")
+  #   c
+  # end
 
   @doc """
   Builds a minimal HTTP configuration.

@@ -20,23 +20,30 @@ end
 
 defimpl ExAws.Operation, for: ExAws.Operation.Query do
   def perform(operation, config) do
-    data = operation.params |> URI.encode_query()
+    data =
+      operation.params
+      |> URI.encode_query()
+      |> IO.inspect(label: " ExAws.Operation.Query.perform().data-1")
 
     data =
       case operation.content_encoding do
         "identity" -> data
         "gzip" -> :zlib.gzip(data)
       end
+      |> IO.inspect(label: " ExAws.Operation.Query.perform().data-2")
 
     url =
       operation
       |> Map.delete(:params)
       |> ExAws.Request.Url.build(config)
+      |> IO.inspect(label: " ExAws.Operation.Query.perform().url")
 
-    headers = [
-      {"content-type", "application/x-www-form-urlencoded"},
-      {"content-encoding", operation.content_encoding}
-    ]
+    headers =
+      [
+        {"content-type", "application/x-www-form-urlencoded"},
+        {"content-encoding", operation.content_encoding}
+      ]
+      |> IO.inspect(label: " ExAws.Operation.Query.perform().headers")
 
     result =
       ExAws.Request.request(:post, url, data, headers, config, operation.service)

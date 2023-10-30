@@ -70,6 +70,7 @@ defmodule ExAws do
   @impl ExAws.Behaviour
   @spec request(ExAws.Operation.t(), keyword) :: {:ok, term} | {:error, term}
   def request(op, config_overrides \\ []) do
+    IO.inspect(label: "--- ExAws.request/2")
     ExAws.Operation.perform(op, ExAws.Config.new(op.service, config_overrides))
   end
 

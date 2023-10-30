@@ -10,6 +10,8 @@ defmodule ExAws.Request do
   @type response_t :: success_t | error_t
 
   def request(http_method, url, data, headers, config, service) do
+    IO.inspect(config, label: "--- ex_aws config ExAws.Request.request()")
+
     body =
       case data do
         [] -> "{}"
@@ -29,6 +31,10 @@ defmodule ExAws.Request do
     with {:ok, full_headers} <- full_headers do
       safe_url = ExAws.Request.Url.sanitize(url, service)
 
+      IO.puts(
+        "--- ex_aws ExAws: Request URL: #{inspect(safe_url)} HEADERS: #{inspect(full_headers)} BODY: #{inspect(req_body)} ATTEMPT: #{attempt}"
+      )
+
       if config[:debug_requests] do
         Logger.debug(
           "ExAws: Request URL: #{inspect(safe_url)} HEADERS: #{inspect(full_headers)} BODY: #{inspect(req_body)} ATTEMPT: #{attempt}"
@@ -37,13 +43,17 @@ defmodule ExAws.Request do
 
       case do_request(config, method, safe_url, req_body, full_headers, attempt, service) do
         {:ok, %{status_code: status} = resp} when status in 200..299 or status == 304 ->
+          IO.inspect(resp, label: "--- ex_aws resp-1")
           {:ok, resp}
 
-        {:ok, %{status_code: status} = _resp} when status == 301 ->
+        {:ok, %{status_code: status} = resp} when status == 301 ->
+          IO.inspect({status, resp}, label: "--- ex_aws resp-2")
           Logger.warning("ExAws: Received redirect, did you specify the correct region?")
           {:error, {:http_error, status, "redirected"}}
 
         {:ok, %{status_code: status} = resp} when status in 400..499 ->
+          IO.inspect({status, resp}, label: "--- ex_aws resp-3")
+
           case client_error(resp, config[:json_codec]) do
             {:retry, reason} ->
               request_and_retry(
@@ -57,10 +67,12 @@ defmodule ExAws.Request do
               )
 
             {:error, reason} ->
+              IO.inspect({status, resp}, label: "--- ex_aws resp-4")
               {:error, reason}
           end
 
         {:ok, %{status_code: status} = resp} when status >= 500 ->
+          IO.inspect({status, resp}, label: "--- ex_aws resp-5")
           body = Map.get(resp, :body)
           reason = {:http_error, status, body}
 
@@ -89,6 +101,7 @@ defmodule ExAws.Request do
             attempt_again?(attempt, reason, config)
           )
       end
+      |> IO.inspect(label: "--- ex_aws case do_request")
     end
   end
 
@@ -105,6 +118,12 @@ defmodule ExAws.Request do
     }
 
     :telemetry.span(telemetry_event, telemetry_metadata, fn ->
+      IO.inspect({method, safe_url, req_body, full_headers},
+        label: "--- ex_aws request input {method, safe_url, req_body, full_headers}"
+      )
+
+      IO.inspect(DateTime.utc_now(), label: "--- ex_aws before-request")
+
       result =
         config[:http_client].request(
           method,
@@ -114,6 +133,8 @@ defmodule ExAws.Request do
           Map.get(config, :http_opts, [])
         )
         |> maybe_transform_response()
+
+      IO.inspect(DateTime.utc_now(), label: "--- ex_aws after-request")
 
       stop_metadata =
         case result do
@@ -195,6 +216,8 @@ defmodule ExAws.Request do
   end
 
   def attempt_again?(attempt, reason, config) do
+    IO.inspect({attempt, reason, config}, label: "--- ex_aws attempt_again?")
+
     if attempt >= config[:retries][:max_attempts] do
       {:error, reason}
     else
@@ -216,5 +239,6 @@ defmodule ExAws.Request do
     {:ok, %{status_code: status, body: body, headers: headers}}
   end
 
-  def maybe_transform_response(response), do: response
+  def maybe_transform_response(response),
+    do: response |> IO.inspect(label: "--- ex_aws transform response")
 end
