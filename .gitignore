@@ -1,0 +1,17 @@
+/doc
+/_build
+*_build*
+/deps
+**/deps*
+erl_crash.dump
+*.ez
+/mnesia/dev
+/mnesia/test
+/mnesia/prod
+*.pem
+/tmp
+
+# IntelliJ IDEA files
+/.idea
+/exaws.iml
+.elixir_ls
